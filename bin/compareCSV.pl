@@ -110,6 +110,8 @@ print "#" x 20, "\n";
 @data = @{ removeUncommonColumnsAndRows(\@data,\%allHeaders,\%allFIPS)};
 
 my %counts = %{countDiffs(\@data)};
+my ($diffs,$l1Dist)  = calcDiffs(\@data);
+
 foreach my $fips (sort keys %counts) {
     print "$fips";
     my %cnts = %{$counts{$fips}};
@@ -121,6 +123,10 @@ foreach my $fips (sort keys %counts) {
     my %cnts = %{$counts{$fips}};
     next unless (scalar keys %cnts > 30);
     printPair(\@data,$fips, \@files);
+}
+
+foreach my $fips (sort {$l1Dist->{$b} <=> $l1Dist->{$a} } keys %$diffs) {
+    print join(",",$fips,@{$diffs->{$fips}}), "\n";
 }
 ########################
 
