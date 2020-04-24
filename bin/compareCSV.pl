@@ -109,8 +109,6 @@ print "#" x 20, "\n";
 
 @data = @{ removeUncommonColumnsAndRows(\@data,\%allHeaders,\%allFIPS)};
 my @colNames = makeColNames($data[0]);
-print join("\t", @colNames), "\n";
-exit;
 
 my %counts = %{countDiffs(\@data)};
 my ($diffs,$l1Dist)  = calcDiffs(\@data);
@@ -129,7 +127,7 @@ foreach my $fips (sort keys %counts) {
 }
 
 
-
+print join(",", "fips", @colNames),"\n";
 foreach my $fips (sort {$l1Dist->{$b} <=> $l1Dist->{$a} } keys %$diffs) {
     print join(",",$fips,@{$diffs->{$fips}}), "\n";
 }

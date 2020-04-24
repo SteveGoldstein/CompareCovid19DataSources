@@ -106,7 +106,7 @@ sub printPair {
 
     my %d0 = %{$data[0]->{$fips}};
     my %d1 = %{$data[1]->{$fips}};
-    my @colName = makeColNames(%d0);
+    my @colName = makeColNames($data[0]);
     print join("\t", $fips, @colName), "\n";
     print join("\t", $files[0], @d0{sort keys %d0}), "\n";
     print join("\t", $files[1], @d1{sort keys %d1}), "\n";
