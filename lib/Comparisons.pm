@@ -9,6 +9,7 @@ our @EXPORT = qw(
     countDiffs
     calcDiffs
     printPair
+    makeColNames
 );
 
 
@@ -105,11 +106,19 @@ sub printPair {
 
     my %d0 = %{$data[0]->{$fips}};
     my %d1 = %{$data[1]->{$fips}};
-    my @colName = sort keys %d0;
-    map{s/^#(.).*_(\d{2}-\d{2})-\d{4}$/${1}_$2/} @colName;
+    my @colName = makeColNames(%d0);
     print join("\t", $fips, @colName), "\n";
     print join("\t", $files[0], @d0{sort keys %d0}), "\n";
     print join("\t", $files[1], @d1{sort keys %d1}), "\n";
     print "\n";
 }
+
+sub makeColNames {
+    my %data = %{ shift()};
+    my $oneFIPS = (keys %data)[0];
+    my @colName = sort keys %{$data{$oneFIPS}};
+    map{s/^#(.).*_(\d{2}-\d{2})-\d{4}$/${1}_$2/} @colName;
+    return(@colName);
+} # sub makeColNames;
+
 1;
