@@ -1,0 +1,1 @@
+cat heatmap.in.csv |perl -F, -nale 'BEGIN{open USA, "out/usa_raw.csv"; <USA>; while(<USA>) { chomp; @F= split /,/; $F[1]=~s/ County.*$//i; $h{$F[0]} = [@F[1,2]];} close USA;} if ($.==1) {print join ",", $F[0],"county", "state", @F[1..$#F]; next;}  ($fips=$F[0])=~s/^0//; print join ",", $F[0],@{$h{$fips}}, @F[1..$#F]; ' > heatmap.in.1.csv 
