@@ -5,6 +5,7 @@ use Carp;
  
 use Exporter qw(import);
 our @EXPORT = qw(
+    parseFile
     removeUncommonColumnsAndRows
     countDiffs
     calcDiffs
@@ -12,7 +13,56 @@ our @EXPORT = qw(
     makeColNames
 );
 
+#### Parse the processed file from UC Berkeley and return a hash ref
+## with data structure:
+##        $data->{fips} -> {#cases_date} = #cases;
+##        $data->{fips} -> {#deaths_date} = #deaths;
 
+sub parseFile {
+    my $file = shift;
+    my $columns = shift; 
+    my $allFIPS = shift; 
+    my $noCases = shift;
+    my $skipFIPS = shift; 
+
+    open F, $file or croak "Can't open processed file $file";
+    my $header = <F>;
+    chomp $header;
+    my @header = split /,/, $header;
+    map{$columns->{$_} ++} @header[1..$#header];
+    my %data;
+    while (<F>) {
+	chomp;
+	my @F = split /,/;
+	my $fips = $F[0];
+	## New York City and Kansas City, MO are in the NYT file as City[12]
+	next if ($fips =~ /^City[12]$/);
+	next if (exists $skipFIPS->{$fips});
+
+	### skip the lines with no cases;
+	my $skip = 1;
+	foreach my $value (@F[1..$#F]) {
+	    if ($value > 0) {
+		$skip = 0;
+		last;
+	    } ##
+	}  ## foreach value
+	if ($skip) {
+	    $noCases->{$fips} ++;
+	    next;
+	}
+
+	$allFIPS->{$fips} ++;
+	map{
+	    ## data{fips} -> {#cases_date} = #cases;
+	    ## data{fips} -> {#deaths_date} = #deaths;
+	    $F[$_] =~ s/\.0+$//;
+	    $data{$fips} -> {$header[$_]} = $F[$_];
+	} (1..$#F);
+    } ## while
+    close F;
+    return \%data;
+}
 sub removeUncommonColumnsAndRows {
     my @data = @ {shift()};
     my %allHeaders = % {shift()};
