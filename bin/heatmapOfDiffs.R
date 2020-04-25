@@ -23,7 +23,7 @@ dat <- read.csv("heatmap.in.csv",
                 sep=",")
 
 ## 2 weeks cases and deaths; top 50 in l1
-heatmap.2(as.matrix(dat)[1:50,c(79:92,171:184)],
+heatmap.2(as.matrix(dat[1:50,c(79:92,171:184)]),
           dendrogram = "none",Rowv = FALSE, Colv = FALSE,
           trace="none",col=col
           )

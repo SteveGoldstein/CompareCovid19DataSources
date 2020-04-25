@@ -52,18 +52,21 @@ foreach my $i (0..$#files) {
     push @data, $dataFromFile;
 }
 
-## compare FIPS;  expect all to be same;
+## find fips codes that do not occur in all files;
+my $logFile = "$outdir/comparison.log";
+open LOG, ">$logFile" or croak "Can't write to logfile $logFile";
+
 foreach my $fips (sort {$a<=>$b} keys %allFIPS) {
     
     next if ($allFIPS{$fips} == scalar @files);
     my $no = $noCases{$fips} // 0;
     next if ($allFIPS{$fips} + $no == scalar @files);
-    print "$fips only occurs in $allFIPS{$fips} file(s).\n";
+    print LOG "$fips only occurs in $allFIPS{$fips} file(s).\n";
 }
 
 
 
-print join("\t", "File", "#Columns", "MissingColumns"),"\n";
+print LOG join("\t", "File", "#Columns", "MissingColumns"),"\n";
 foreach my $i (0..$#data) {
     my $oneFIPS = (keys %allFIPS)[0];
     my @headers = keys %{$data[$i]->{$oneFIPS}};
@@ -79,9 +82,9 @@ foreach my $i (0..$#data) {
 	    push @different, $column;
 	}
     } ## foreach column
-    print join("\t", $files[$i], $same,join(",",@different)),"\n";
+    print LOG join("\t", $files[$i], $same,join(",",@different)),"\n";
 }
-print "#" x 20, "\n";
+print LOG "#" x 20, "\n";
 
 @data = @{ removeUncommonColumnsAndRows(\@data,\%allColumns,\%allFIPS)};
 my @colNames = makeColNames($data[0]);
