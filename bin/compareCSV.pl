@@ -56,12 +56,20 @@ foreach my $i (0..$#files) {
 my $logFile = "$outdir/comparison.log";
 open LOG, ">$logFile" or croak "Can't write to logfile $logFile";
 
+my %addNulls;  
 foreach my $fips (sort {$a<=>$b} keys %allFIPS) {
     
     next if ($allFIPS{$fips} == scalar @files);
     my $no = $noCases{$fips} // 0;
-    next if ($allFIPS{$fips} + $no == scalar @files);
-    print LOG "$fips only occurs in $allFIPS{$fips} file(s).\n";
+    if ($allFIPS{$fips} + $no == scalar @files) {
+	### if this fips is in all the files, add back entries with zeros;
+	$addNulls{$fips} = 1;
+	next;
+    }
+    else {
+	## otherwise just note that is isn't in all the files;
+	print LOG "$fips only occurs in $allFIPS{$fips} file(s).\n";
+    }
 }
 
 print LOG join("\t", "File", "#Columns", "MissingColumns"),"\n";
@@ -84,7 +92,12 @@ foreach my $i (0..$#data) {
 }
 print LOG "#" x 20, "\n";
 
-@data = @{ removeUncommonColumnsAndRows(\@data,\%allColumns,\%allFIPS)};
+my @removed = removeUncommonColumnsAndRows(
+    \@data,\%allColumns,\%allFIPS,\%addNulls);
+@data = @{$removed[0]};
+my @rmMsg = @{$removed[1]};
+print LOG @rmMsg;
+ 
 my @colNames = makeColNames($data[0]);
 
 ## calculate pairwise differences and order by l1 distance

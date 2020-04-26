@@ -67,7 +67,11 @@ sub removeUncommonColumnsAndRows {
     my @data = @ {shift()};
     my %allHeaders = % {shift()};
     my %allFIPS = %{ shift()};
+    my %addNulls = % {shift()};
+    
     my @columns2Delete = ();
+    my @rmMsg;
+    
     foreach my $i (0..$#data) {
 	my %data = %{$data[$i]};
 	my @FIPS = keys %data;
@@ -85,24 +89,32 @@ sub removeUncommonColumnsAndRows {
     foreach my $i (0..$#data) {
 	my %data = %{$data[$i]};
 	my @FIPS = keys %data;
-
+	my @allColumns = keys %{$data{$FIPS[0]}};
+	
+	## add a row of zeros for the fips in addNulls;
+	map {
+	    if (not exists $data{$_}) {
+		push @FIPS, $_;
+		$allFIPS{$_} ++;
+		foreach my $col (@allColumns) {
+		    $data{$_}->{$col} = 0;
+		}
+	    }
+	} keys %addNulls;
+	
 	my @fips2Remove;
 	foreach my $fips (sort @FIPS) {
-	    ## this is missing rows that have all zeros in one and a nonzero
-	    ## in another;  maybe add this later; 
 	    if ($allFIPS{$fips} != scalar @data) {
-		#carp "Removing fips $fips from data source $i\n";
-		#delete $data{$fips};
 		push @fips2Remove, $fips;
 		next;
 	    } ## if
 	    delete @{$data{$fips}}{@columns2Delete};
 	}  ## foreach fips
 	delete @data{@fips2Remove};
-	carp "Removed fips @fips2Remove from data source $i\n";
+	push @rmMsg,  "Removed fips @fips2Remove from data source $i\n";
 	$data[$i] = \%data;
     } ## foreach data source
-    return \@data;
+    return (\@data,\@rmMsg);
 } ## sub remove columns and rows
 
 sub countDiffs {
