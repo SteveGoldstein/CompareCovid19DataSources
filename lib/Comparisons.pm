@@ -105,7 +105,8 @@ sub removeUncommonColumnsAndRows {
 	
 	my @fips2Remove;
 	foreach my $fips (sort @FIPS) {
-	    if ($allFIPS{$fips} != scalar @data) {
+	    if ($allFIPS{$fips} != scalar @data 
+		and not exists $addNulls{$fips} ) {
 		push @fips2Remove, $fips;
 		next;
 	    } ## if
