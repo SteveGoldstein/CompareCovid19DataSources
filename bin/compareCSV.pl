@@ -9,22 +9,28 @@ use Getopt::Long;
 use lib "lib";
 use Comparisons;
 
+### input files
 my $nytURL = 'https://raw.githubusercontent.com/Yu-Group/covid19-severity-prediction/master/data/county_level/processed/nytimes_infections/nytimes_infections.csv';
 my $usfURL = 'https://raw.githubusercontent.com/Yu-Group/covid19-severity-prediction/master/data/county_level/processed/usafacts_infections/usafacts_infections.csv';
 my $nytFile = 'nytimes_infections.csv';
 my $usfFile = 'usafacts_infections.csv';
-
 my @urls = ($nytURL, $usfURL);
 my @files = ($nytFile, $usfFile);
+
 my $outdir = './';
-my $fetch = 1;
+## for testing;
+my $fetch = 1;   ## use -nofetch to avoid downloading files 
 
 GetOptions (
     'outdir=s'   => \$outdir,
     'fetch!'     => \$fetch,
     );
 
+## output files
 map{$_ = "$outdir/$_"} @files;
+my $logFile = "$outdir/comparison.log";
+my $l1DistanceFile = "$outdir/l1Distance.csv";
+my $dataFile = "$outdir/infections.csv";
 
 if ($fetch) {
     foreach my $i (0..1) {
@@ -53,7 +59,6 @@ foreach my $i (0..$#files) {
 }
 
 ## find fips codes that do not occur in all files;
-my $logFile = "$outdir/comparison.log";
 open LOG, ">$logFile" or croak "Can't write to logfile $logFile";
 
 my %addNulls;  
@@ -96,25 +101,50 @@ my @removed = removeUncommonColumnsAndRows(
     \@data,\%allColumns,\%allFIPS,\%addNulls);
 @data = @{$removed[0]};
 my @rmMsg = @{$removed[1]};
-print LOG @rmMsg;
- 
+map{ 
+    print LOG $rmMsg[$_], $files[$_], "\n";
+} (0..$#data);
+close LOG;
+
 my @colNames = makeColNames($data[0]);
 
 ## calculate pairwise differences and order by l1 distance
 my ($diffs,$l1Dist)  = calcDiffs(\@data);
-print join(",", "fips", @colNames),"\n";
+open L1, ">$l1DistanceFile" or
+    croak "Can't write to $l1DistanceFile";
+
+## HEADER;
+print L1 join(",", "fips", @colNames),"\n";
+
+## print data from both in common format;
+open DAT, ">$dataFile" or
+    croak "Can't write to $dataFile.";
+my $datHeader = printPairHeader(\@data);
+print DAT $datHeader;
+
+## now print lines in each file;
 foreach my $fips (
     sort {
 	## sort by l1 distance between rows
 	$l1Dist->{$b} <=> $l1Dist->{$a} ||
 	    $a <=> $b
-    } 
-    keys %$diffs) {
-    print join(",",$fips,@{$diffs->{$fips}}), "\n";
-}
+    } keys %$diffs) 
+{
+    print L1 join(",",$fips,@{$diffs->{$fips}}), "\n";
+    my $datPair = printPair(\@data,$fips,\@files);
+    print DAT $datPair;
+} ## foreach fips
+close L1;
+close DAT;
+
 ########################
 
 __END__
+
+to do:  4/26:
+    add cosine score;
+    then add heatmap plots;
+
 
 ##### histogram of differences between rows
 my %counts = %{countDiffs(\@data)};

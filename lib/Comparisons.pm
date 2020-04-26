@@ -10,6 +10,7 @@ our @EXPORT = qw(
     countDiffs
     calcDiffs
     printPair
+    printPairHeader
     makeColNames
 );
 
@@ -111,7 +112,14 @@ sub removeUncommonColumnsAndRows {
 	    delete @{$data{$fips}}{@columns2Delete};
 	}  ## foreach fips
 	delete @data{@fips2Remove};
-	push @rmMsg,  "Removed fips @fips2Remove from data source $i\n";
+	if (scalar @fips2Remove) {
+	    my $rmMsg = "Removed fips " . 
+		join(",", @fips2Remove) . " from file ";
+	    push @rmMsg, $rmMsg;
+	}
+	else {
+	    push @rmMsg, "All fips retained from file ";
+	}
 	$data[$i] = \%data;
     } ## foreach data source
     return (\@data,\@rmMsg);
@@ -160,19 +168,41 @@ sub calcDiffs {
 } ## sub calcDiffs
 
 ## to do: change this to printHeader and printLine(0,1 or (0,1)
+sub printPairHeader {
+    my @data = @{shift()};
+    return printPair(\@data);
+}
+
 sub printPair {
     my @data = @{shift()};
     my $fips = shift;
-    my @files = @{shift()};
-    map{s%^.*/(.....).*$%$1%} @files;
+    my @files = @{shift() || [] };
+    my $printHeader = shift || 0;
+    my $printLines = 1;
+    
+    my $output = '';
 
+    if (not defined $fips) {
+	## get a dummy fips to enable formatting the column names, etc;
+	$fips = (keys %{$data[0]})[0];
+	$printHeader = 1;
+	$printLines = 0;
+    }
+    ## to do: make this an array of hash refs;
     my %d0 = %{$data[0]->{$fips}};
     my %d1 = %{$data[1]->{$fips}};
     my @colName = makeColNames($data[0]);
-    print join("\t", $fips, @colName), "\n";
-    print join("\t", $files[0], @d0{sort keys %d0}), "\n";
-    print join("\t", $files[1], @d1{sort keys %d1}), "\n";
-    print "\n";
+    if ($printHeader) {
+	$output .= join(",", "fips", @colName) . "\n";
+    }
+    if ($printLines) {
+	my @source = @files;
+	map {s%^.*/([^/]+)_infections\.csv$%$1%;} @source;
+
+	$output .= join(",", $fips, $source[0], @d0{sort keys %d0}) . "\n";
+	$output .= join(",", $fips, $source[1], @d1{sort keys %d1}) . "\n";
+    }
+    return $output;
 }
 
 sub makeColNames {
