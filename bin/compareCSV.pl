@@ -64,8 +64,6 @@ foreach my $fips (sort {$a<=>$b} keys %allFIPS) {
     print LOG "$fips only occurs in $allFIPS{$fips} file(s).\n";
 }
 
-
-
 print LOG join("\t", "File", "#Columns", "MissingColumns"),"\n";
 foreach my $i (0..$#data) {
     my $oneFIPS = (keys %allFIPS)[0];
@@ -89,22 +87,6 @@ print LOG "#" x 20, "\n";
 @data = @{ removeUncommonColumnsAndRows(\@data,\%allColumns,\%allFIPS)};
 my @colNames = makeColNames($data[0]);
 
-
-##### histogram of differences between rows
-my %counts = %{countDiffs(\@data)};
-foreach my $fips (sort keys %counts) {
-    print "$fips";
-    my %cnts = %{$counts{$fips}};
-    map {print join "=>", ",$_",$cnts{$_}} (sort {$a<=>$b} keys %cnts);
-    print "\n";
-}
-# print the ones with the most bins in the histogram
-foreach my $fips (sort keys %counts) {
-    my %cnts = %{$counts{$fips}};
-    next unless (scalar keys %cnts > 20);
-    printPair(\@data,$fips, \@files);
-}
-
 ## calculate pairwise differences and order by l1 distance
 my ($diffs,$l1Dist)  = calcDiffs(\@data);
 print join(",", "fips", @colNames),"\n";
@@ -120,3 +102,18 @@ foreach my $fips (
 ########################
 
 __END__
+
+##### histogram of differences between rows
+my %counts = %{countDiffs(\@data)};
+foreach my $fips (sort keys %counts) {
+    print "$fips";
+    my %cnts = %{$counts{$fips}};
+    map {print join "=>", ",$_",$cnts{$_}} (sort {$a<=>$b} keys %cnts);
+    print "\n";
+}
+# print the ones with the most bins in the histogram
+foreach my $fips (sort keys %counts) {
+    my %cnts = %{$counts{$fips}};
+    next unless (scalar keys %cnts > 20);
+    printPair(\@data,$fips, \@files);
+}
