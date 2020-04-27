@@ -38,7 +38,7 @@ my $excludeIdentical = 1;
 ## Avoid downloading data files for testing with -nofetch
 ##   (first copy files to outdir)
 my $fetch = 1;
-
+my $commandLine = "$PROGRAM_NAME @ARGV";
 
 GetOptions (
     'outdir=s'          => \$outdir,
@@ -51,6 +51,11 @@ map{$_ = "$outdir/$_"} @files;
 my $logFile = "$outdir/comparison.log";
 my $l1DistanceFile = "$outdir/l1Distance.csv";
 my $dataFile = "$outdir/infections.csv";
+
+open LOG, ">$logFile" or croak "Can't write to logfile $logFile";
+my $gitCommit = `git rev-parse --verify HEAD`;
+chomp $gitCommit;
+print LOG "Command line:\n\t $commandLine\ngit commit:\n\t$gitCommit\n\n";
 
 if ($fetch) {
     foreach my $i (0..1) {
@@ -79,8 +84,6 @@ foreach my $i (0..$#files) {
 }
 
 ## find fips codes that do not occur in all files;
-open LOG, ">$logFile" or croak "Can't write to logfile $logFile";
-
 my %addNulls;  
 foreach my $fips (sort {$a<=>$b} keys %allFIPS) {
     
@@ -167,7 +170,5 @@ to do:  4/26:
     add cosine score;
 
 to do 4/27:
-    add git sha1 hash and cmd line to log;
-
-    add heatmap to log;
+    add heatmap to perl exe;
 
