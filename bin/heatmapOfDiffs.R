@@ -1,6 +1,8 @@
-## 
+### Heatmaps displaying differences between NYTimes and USAfacts counts;
+## usage:  Rscript --vanilla bin/heatmapOfDiffs.R 
+##               -plotFile <plot.pdf>  -csvFile <l1Dist.csv>
 
-# Setup -------------------------------------------------------------------
+## Setup -------------------------------------------------------------------
 
 library(dplyr)
 library(tidyverse)
@@ -8,8 +10,8 @@ library(gplots)
 
 
 defaultArgs <- list (
-  plotFile = "countDifferences.pdf",
-  csvFile = 'l1Distance.csv'
+  plotFile = '2020-04-27/heatmaps.pdf',
+  csvFile = '2020-04-27/l1Distance.csv'
 )
 
 args <- R.utils::commandArgs(trailingOnly = TRUE,
@@ -17,8 +19,15 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
                              defaults = defaultArgs)
 
 pdf(args$plotFile)
+
+dat <- read.csv(args$csvFile,
+                row.names=1,
+                header = TRUE,
+                sep=",")
+
+########## functions -----------------------------------------------
 colRWB<- function(n=11) {colorRampPalette(c("blue", "white", "red"))(n)}
-########## functions
+
 drawHeatMap <- function(x,rowRange = 1:nrow(x),
                         colRange = -grep("l1Distance",colnames(x)),
                         col=colRWB(),rowLabel=NULL,
@@ -53,36 +62,44 @@ firstNDays <- function(columnNames = colnames(dat), n=14) {
   return(c(minCases:(minCases+n-1),minDeaths:(minDeaths+n-1)))
 } ## firstNDays
 
-#############
-dat <- read.csv(args$csvFile,
-                row.names=1,
-                header = TRUE,
-                sep=",")
-
+#########################################
+## plots --------------------------------------------
 ### all data
 drawHeatMap(dat, rowLabel = "", plotTitle = "NYT-USAFacts"
             )
 
-## 2 weeks cases and deaths; top 50 in l1
+## 2 weeks cases and deaths; top 25 in l1
 drawHeatMap(dat,rowRange = 1:25,
             colRange = lastNDays(n=14),
-            plotTitle = "25 Counties(fips) with largest l1 distance: last 2 weeks"
+            plotTitle = paste("25 Counties(fips) with largest l1 distance",
+            "last 2 weeks", sep = "\n")
             )
 
 ### first 2 months
-drawHeatMap(dat,rowRange = 500:nrow(dat), colRange = firstNDays(n=60),rowLabel = "",
+drawHeatMap(dat,rowRange = 1:100, colRange = firstNDays(n=60),
+            rowLabel = "", rowv = FALSE,
+            plotTitle = "NYT-USAFacts: first 2 months top 100"
+)
+
+drawHeatMap(dat,rowRange = 101:500, colRange = firstNDays(n=60),
+            rowLabel = "", rowv = TRUE,
+            plotTitle = "NYT-USAFacts: first 2 months l1 ranks 101-500"
+)
+
+drawHeatMap(dat,rowRange = 501:nrow(dat), colRange = firstNDays(n=60),
+            rowLabel = "", rowv = TRUE,
+            col=colRWB(7),
             plotTitle = "NYT-USAFacts: first 2 months w/o top 500"
 )
 
 ## smallest differences
-drawHeatMap(dat,rowRange = (nrow(dat)-500+1):nrow(dat),rowLabel = "",
-            plotTitle = "NYT-USAFacts: 500 counties with smallest l1 distance"
-)
-
-drawHeatMap(dat,rowRange = (nrow(dat)-25+1):nrow(dat),
-            plotTitle = "NYT-USAFacts: 25 counties with smallest l1 distance"
+smallL1_dat <- dat %>% 
+  filter(l1Distance < 4)
+drawHeatMap(smallL1_dat,rowLabel = "",
+            rowv = TRUE,
+            col=colRWB(7),
+            plotTitle = "NYT-USAFacts: counties with l1 distance < 4"
 )
 
 dev.off()
-
 q()

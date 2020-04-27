@@ -1,5 +1,22 @@
 #!/usr/bin/perl -w
 
+########################################
+### bin/compareCSV.pl
+##   Retrieves "processed" files from Yu-Group (Berkeley) github repo;
+##   Compares files, producing:
+##    1.  log with differences noted
+##    2.  csv file with pairwise differences for each observation 
+##             (cases or deaths for a given day)
+##    3.  csv file with processed data in a common format.
+##   Uses:  The csv pairwise differences can be input to bin/heatmapOfDiffs.R
+##          The csv file with all the data can be used for visual inspection
+##             or other further analysis.
+
+## Usage:  bin/compareCSV.pl -outdir <dir>
+##             -fetch or -nofetch:   hook to avoid multiple wgets (for testing)
+##             -excludeIdentical (default) or -noex:  
+##                  suppress printing identical entries
+
 use warnings;
 use strict;
 use Carp;
@@ -17,14 +34,16 @@ my @urls = ($nytURL, $usfURL);
 my @files = ($nytFile, $usfFile);
 
 my $outdir = './';
-## for testing;
-my $fetch = 1;   ## use -nofetch to avoid downloading files 
-my $reportIdentical = 1;
+my $excludeIdentical = 1;
+## Avoid downloading data files for testing with -nofetch
+##   (first copy files to outdir)
+my $fetch = 1;
+
 
 GetOptions (
-    'outdir=s'     => \$outdir,
-    'fetch!'       => \$fetch,
-    'reportIdentical!' => \$reportIdentical,
+    'outdir=s'          => \$outdir,
+    'excludeIdentical!' => \$excludeIdentical,
+    'fetch!'            => \$fetch,
     );
 
 ## output files
@@ -110,7 +129,7 @@ map{
 my @colNames = makeColNames($data[0]);
 
 ## calculate pairwise differences and order by l1 distance
-my ($diffs,$l1Dist,$numIdentical)  = calcDiffs(\@data, $reportIdentical);
+my ($diffs,$l1Dist,$numIdentical)  = calcDiffs(\@data, $excludeIdentical);
 print LOG "$numIdentical fips identical\n"; 
 close LOG;
 open L1, ">$l1DistanceFile" or
@@ -152,22 +171,3 @@ to do 4/27:
 
     add heatmap to log;
 
-
-
-bin/compareCSV.pl -out 2020-04-27_1/ -nofetch  -noreport 1> o.0 2> e.0 &
-
-
-##### histogram of differences between rows
-my %counts = %{countDiffs(\@data)};
-foreach my $fips (sort keys %counts) {
-    print "$fips";
-    my %cnts = %{$counts{$fips}};
-    map {print join "=>", ",$_",$cnts{$_}} (sort {$a<=>$b} keys %cnts);
-    print "\n";
-}
-# print the ones with the most bins in the histogram
-foreach my $fips (sort keys %counts) {
-    my %cnts = %{$counts{$fips}};
-    next unless (scalar keys %cnts > 20);
-    printPair(\@data,$fips, \@files);
-}

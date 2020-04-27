@@ -1,3 +1,4 @@
+### Functions for comparing data files;
 package Comparisons;
 use strict;
 use warnings;
@@ -24,7 +25,7 @@ sub parseFile {
     my $columns = shift; 
     my $allFIPS = shift; 
     my $noCases = shift;
-    my $skipFIPS = shift; 
+    my $skipFIPS = shift;  ## special cases like NYC boroughs. 
 
     open F, $file or croak "Can't open processed file $file";
     my $header = <F>;
@@ -64,6 +65,12 @@ sub parseFile {
     close F;
     return \%data;
 }
+#####################################
+##  When comparing two data files, only compare rows and columns common to both
+##   Note:  If a row has no cases in any data source, exclude it.
+##          If a row has no cases in one or more sources but
+##              some in the others, include it.
+
 sub removeUncommonColumnsAndRows {
     my @data = @ {shift()};
     my %allHeaders = % {shift()};
@@ -126,28 +133,15 @@ sub removeUncommonColumnsAndRows {
     return (\@data,\@rmMsg);
 } ## sub remove columns and rows
 
-sub countDiffs {
-    my @data = @{ shift()};
-
-    my @FIPS = sort {$a<=>$b} keys %{$data[0]};
-    my @columns = sort keys %{$data[0]->{$FIPS[0]}};
-    my %diffs;
-    
-    foreach my $fips (@FIPS) {
-	my %counts;
-	foreach my $col (@columns) {
-	    my $diff = $data[0]->{$fips}->{$col} - $data[1]->{$fips}->{$col};
-	    $counts{$diff} ++;
-	}
-	$diffs{$fips} = \%counts;
-    } ## foreach
-    return \%diffs;
-
-} ## sub countDiffs
+###########################################################
+##  Returns a matrix with cell i,j =
+##         difference between sources at time j for ith county.
+##  Also returns l1 distance between each source and 
+##       the number with l1 distance = 0 (i.e. number identical)
 
 sub calcDiffs {
     my @data = @{ shift()};
-    my $reportIdentical = shift;
+    my $excludeIdentical = shift;
 
     my @FIPS = sort {$a<=>$b} keys %{$data[0]};
     my @columns = sort keys %{$data[0]->{$FIPS[0]}};
@@ -166,7 +160,7 @@ sub calcDiffs {
 	my $l1 = 0;
 	map{$l1 += abs} @diffs;
 	$numIdentical ++ if ($l1 == 0);
-	if ($l1 > 0 or $reportIdentical) {
+	if ($l1 > 0 or not $excludeIdentical) {
 	    $l1Dist{$fips} = $l1;
 	    $diffs{$fips} = \@diffs;
 	}
@@ -175,12 +169,9 @@ sub calcDiffs {
     return (\%diffs,\%l1Dist,$numIdentical);
 } ## sub calcDiffs
 
-## to do: change this to printHeader and printLine(0,1 or (0,1)
-sub printPairHeader {
-    my @data = @{shift()};
-    return printPair(\@data);
-}
-
+######################################################
+######  Print entries from all data sources for one county;
+#####      This enables a direct comparison and visual inspection.  
 sub printPair {
     my @data = @{shift()};
     my $fips = shift;
@@ -213,6 +204,14 @@ sub printPair {
     return $output;
 }
 
+### print only the header;
+sub printPairHeader {
+    my @data = @{shift()};
+    return printPair(\@data);
+}
+
+#####################################################
+### shorten column names for plotting;
 sub makeColNames {
     my %data = %{ shift()};
     my $oneFIPS = (keys %data)[0];
@@ -220,5 +219,26 @@ sub makeColNames {
     map{s/^#(.).*_(\d{2}-\d{2})-\d{4}$/${1}_$2/} @colName;
     return(@colName);
 } # sub makeColNames;
+
+#### depricated
+sub countDiffs {
+    my @data = @{ shift()};
+
+    my @FIPS = sort {$a<=>$b} keys %{$data[0]};
+    my @columns = sort keys %{$data[0]->{$FIPS[0]}};
+    my %diffs;
+    
+    foreach my $fips (@FIPS) {
+	my %counts;
+	foreach my $col (@columns) {
+	    my $diff = $data[0]->{$fips}->{$col} - $data[1]->{$fips}->{$col};
+	    $counts{$diff} ++;
+	}
+	$diffs{$fips} = \%counts;
+    } ## foreach
+    return \%diffs;
+
+} ## sub countDiffs
+
 
 1;
