@@ -166,7 +166,7 @@ my $heatmapRScript = "bin/heatmapOfDiffs.R";
 my $heatmapPDF = "$outdir/heatmaps.pdf";
 my $Rout = "$outdir/heatmap.R.out";
 my $Rerr = "$outdir/heatmap.R.err";
-my $heatmapCmd = "Rscript --vanilla $heatmapRscript";
+my $heatmapCmd = "Rscript --vanilla $heatmapRScript";
 $heatmapCmd .= " -csvFile $l1DistanceFile -plotFile $heatmapPDF";
 $heatmapCmd .= " 1> $Rout 2> $Rerr";
 print LOG "Heatmap command:\n\t$heatmapCmd\n";
