@@ -147,12 +147,14 @@ sub countDiffs {
 
 sub calcDiffs {
     my @data = @{ shift()};
+    my $reportIdentical = shift;
 
     my @FIPS = sort {$a<=>$b} keys %{$data[0]};
     my @columns = sort keys %{$data[0]->{$FIPS[0]}};
     
     my %diffs;
     my %l1Dist;
+    my $numIdentical = 0;
     foreach my $fips (@FIPS) {
 	my %counts;
 	my @diffs;
@@ -160,12 +162,17 @@ sub calcDiffs {
 	    my $diff = $data[0]->{$fips}->{$col} - $data[1]->{$fips}->{$col};
 	    push @diffs, $diff;
 	}
-	$diffs{$fips} = \@diffs;
+
 	my $l1 = 0;
 	map{$l1 += abs} @diffs;
-	$l1Dist{$fips} = $l1;
+	$numIdentical ++ if ($l1 == 0);
+	if ($l1 > 0 or $reportIdentical) {
+	    $l1Dist{$fips} = $l1;
+	    $diffs{$fips} = \@diffs;
+	}
     } ## foreach
-    return (\%diffs,\%l1Dist);
+    
+    return (\%diffs,\%l1Dist,$numIdentical);
 } ## sub calcDiffs
 
 ## to do: change this to printHeader and printLine(0,1 or (0,1)
@@ -194,7 +201,7 @@ sub printPair {
     my %d1 = %{$data[1]->{$fips}};
     my @colName = makeColNames($data[0]);
     if ($printHeader) {
-	$output .= join(",", "fips", @colName) . "\n";
+	$output .= join(",", "fips", "source", @colName) . "\n";
     }
     if ($printLines) {
 	my @source = @files;

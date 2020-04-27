@@ -19,10 +19,12 @@ my @files = ($nytFile, $usfFile);
 my $outdir = './';
 ## for testing;
 my $fetch = 1;   ## use -nofetch to avoid downloading files 
+my $reportIdentical = 1;
 
 GetOptions (
-    'outdir=s'   => \$outdir,
-    'fetch!'     => \$fetch,
+    'outdir=s'     => \$outdir,
+    'fetch!'       => \$fetch,
+    'reportIdentical!' => \$reportIdentical,
     );
 
 ## output files
@@ -103,17 +105,19 @@ my @rmMsg = @{$removed[1]};
 map{ 
     print LOG $rmMsg[$_], $files[$_], "\n";
 } (0..$#data);
-close LOG;
+
 
 my @colNames = makeColNames($data[0]);
 
 ## calculate pairwise differences and order by l1 distance
-my ($diffs,$l1Dist)  = calcDiffs(\@data);
+my ($diffs,$l1Dist,$numIdentical)  = calcDiffs(\@data, $reportIdentical);
+print LOG "$numIdentical fips identical\n"; 
+close LOG;
 open L1, ">$l1DistanceFile" or
     croak "Can't write to $l1DistanceFile";
 
 ## HEADER;
-print L1 join(",", "fips", @colNames),"\n";
+print L1 join(',', 'fips', 'l1Distance', @colNames),"\n";
 
 ## print data from both in common format;
 open DAT, ">$dataFile" or
@@ -129,7 +133,7 @@ foreach my $fips (
 	    $a <=> $b
     } keys %$diffs) 
 {
-    print L1 join(",",$fips,@{$diffs->{$fips}}), "\n";
+    print L1 join(',',$fips,$l1Dist->{$fips},@{$diffs->{$fips}}), "\n";
     my $datPair = printPair(\@data,$fips,\@files);
     print DAT $datPair;
 } ## foreach fips
@@ -142,7 +146,15 @@ __END__
 
 to do:  4/26:
     add cosine score;
-    then add heatmap plots;
+
+to do 4/27:
+    add git sha1 hash and cmd line to log;
+
+    add heatmap to log;
+
+
+
+bin/compareCSV.pl -out 2020-04-27_1/ -nofetch  -noreport 1> o.0 2> e.0 &
 
 
 ##### histogram of differences between rows

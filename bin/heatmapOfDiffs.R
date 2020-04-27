@@ -17,16 +17,18 @@ args <- R.utils::commandArgs(trailingOnly = TRUE,
                              defaults = defaultArgs)
 
 pdf(args$plotFile)
-colRWB<- colorRampPalette(c("blue", "white", "red"))(11)
+colRWB<- function(n=11) {colorRampPalette(c("blue", "white", "red"))(n)}
 ########## functions
-drawHeatMap <- function(x,rowRange = 1:nrow(x),colRange = 1:ncol(x),
-                        col=colRWB,rowLabel=NULL,
+drawHeatMap <- function(x,rowRange = 1:nrow(x),
+                        colRange = -grep("l1Distance",colnames(x)),
+                        col=colRWB(),rowLabel=NULL,
+                        rowv = FALSE,
                         plotTitle = ""
                         ) {
 
   heatmap.2(as.matrix(x[rowRange,colRange]),
             dendrogram = "none",
-            Rowv = FALSE,
+            Rowv = rowv,
             Colv = FALSE,
             cexRow = .4,
             labRow = rowLabel,
@@ -73,8 +75,8 @@ drawHeatMap(dat,rowRange = 500:nrow(dat), colRange = firstNDays(n=60),rowLabel =
 )
 
 ## smallest differences
-drawHeatMap(dat,rowRange = (nrow(dat)-2000+1):nrow(dat),rowLabel = "",
-            plotTitle = "NYT-USAFacts: 2000 counties with smallest l1 distance"
+drawHeatMap(dat,rowRange = (nrow(dat)-500+1):nrow(dat),rowLabel = "",
+            plotTitle = "NYT-USAFacts: 500 counties with smallest l1 distance"
 )
 
 drawHeatMap(dat,rowRange = (nrow(dat)-25+1):nrow(dat),
