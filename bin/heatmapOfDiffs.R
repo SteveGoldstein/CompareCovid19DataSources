@@ -1,4 +1,4 @@
-## remove genes and then plot heatmap of pearson correlations;
+## 
 
 # Setup -------------------------------------------------------------------
 
@@ -8,42 +8,79 @@ library(gplots)
 
 
 defaultArgs <- list (
-  #pct = 5
+  plotFile = "countDifferences.pdf",
+  csvFile = 'l1Distance.csv'
 )
 
 args <- R.utils::commandArgs(trailingOnly = TRUE,
                              asValues = TRUE ,
                              defaults = defaultArgs)
 
-col<- colorRampPalette(c("blue", "white", "red"))(500)
+pdf(args$plotFile)
+colRWB<- colorRampPalette(c("blue", "white", "red"))(11)
+########## functions
+drawHeatMap <- function(x,rowRange = 1:nrow(x),colRange = 1:ncol(x),
+                        col=colRWB,rowLabel=NULL,
+                        plotTitle = ""
+                        ) {
 
-dat <- read.csv("heatmap.in.csv",
+  heatmap.2(as.matrix(x[rowRange,colRange]),
+            dendrogram = "none",
+            Rowv = FALSE,
+            Colv = FALSE,
+            cexRow = .4,
+            labRow = rowLabel,
+            key.xlab = "diff between counts",
+            trace="none",
+            denscol = "black", density.info = "density",
+            col=col
+            )
+  title(main= plotTitle)
+} ##drawHeatmap
+
+## get column indices for ranges of dates;
+lastNDays <- function(columnNames = colnames(dat), n=14) {
+  maxCases  <- max(grep("^C",columnNames))
+  maxDeaths <- max(grep("^D",columnNames))
+  return(c((maxCases-n+1):maxCases,(maxDeaths-n+1):maxDeaths))
+} ## lastNDays
+
+firstNDays <- function(columnNames = colnames(dat), n=14) {
+  minCases  <- min(grep("^C",columnNames))
+  minDeaths <- min(grep("^D",columnNames))
+  return(c(minCases:(minCases+n-1),minDeaths:(minDeaths+n-1)))
+} ## firstNDays
+
+#############
+dat <- read.csv(args$csvFile,
                 row.names=1,
                 header = TRUE,
                 sep=",")
 
+### all data
+drawHeatMap(dat, rowLabel = "", plotTitle = "NYT-USAFacts"
+            )
+
 ## 2 weeks cases and deaths; top 50 in l1
-heatmap.2(as.matrix(dat[1:50,c(79:92,171:184)]),
-          dendrogram = "none",Rowv = FALSE, Colv = FALSE,
-          trace="none",col=col
-          )
-title(main = plotDescription[i])
+drawHeatMap(dat,rowRange = 1:25,
+            colRange = lastNDays(n=14),
+            plotTitle = "25 Counties(fips) with largest l1 distance: last 2 weeks"
+            )
 
-## 2 weeks cases and deaths; bottom of the list;
-heatmap.2(as.matrix(dat)[1000:2758,c(79:92,171:184)],
-          dendrogram = "none",Rowv = FALSE, Colv = FALSE,
-          trace="none",col=col
-          )
-heatmap.2(as.matrix(dat)[1:10,c(79:92,171:184)],
-          dendrogram = "none",Rowv = FALSE, Colv = FALSE,
-          trace="none",col=col
-          )
-
-heatmap.2(as.matrix(dat)[1:10,],
-          dendrogram = "none",Rowv = FALSE, Colv = FALSE,
-          trace="none",col=col
+### first 2 months
+drawHeatMap(dat,rowRange = 500:nrow(dat), colRange = firstNDays(n=60),rowLabel = "",
+            plotTitle = "NYT-USAFacts: first 2 months w/o top 500"
 )
 
+## smallest differences
+drawHeatMap(dat,rowRange = (nrow(dat)-2000+1):nrow(dat),rowLabel = "",
+            plotTitle = "NYT-USAFacts: 2000 counties with smallest l1 distance"
+)
 
+drawHeatMap(dat,rowRange = (nrow(dat)-25+1):nrow(dat),
+            plotTitle = "NYT-USAFacts: 25 counties with smallest l1 distance"
+)
+
+dev.off()
 
 q()
