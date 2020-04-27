@@ -134,7 +134,7 @@ my @colNames = makeColNames($data[0]);
 ## calculate pairwise differences and order by l1 distance
 my ($diffs,$l1Dist,$numIdentical)  = calcDiffs(\@data, $excludeIdentical);
 print LOG "$numIdentical fips identical\n"; 
-close LOG;
+
 open L1, ">$l1DistanceFile" or
     croak "Can't write to $l1DistanceFile";
 
@@ -162,13 +162,21 @@ foreach my $fips (
 close L1;
 close DAT;
 
+my $heatmapRScript = "bin/heatmapOfDiffs.R";
+my $heatmapPDF = "$outdir/heatmaps.pdf";
+my $Rout = "$outdir/heatmap.R.out";
+my $Rerr = "$outdir/heatmap.R.err";
+my $heatmapCmd = "Rscript --vanilla $heatmapRscript";
+$heatmapCmd .= " -csvFile $l1DistanceFile -plotFile $heatmapPDF";
+$heatmapCmd .= " 1> $Rout 2> $Rerr";
+print LOG "Heatmap command:\n\t$heatmapCmd\n";
+## execute heatmapCmd and print result (if any) to log;
+print LOG `$heatmapCmd`;
+close LOG;
+
 ########################
 
 __END__
 
 to do:  4/26:
-    add cosine score;
-
-to do 4/27:
-    add heatmap to perl exe;
-
+    experiment with cosine score and see if it is informative
