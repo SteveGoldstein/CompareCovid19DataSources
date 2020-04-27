@@ -7,10 +7,10 @@
 ##    1.  log with differences noted
 ##    2.  csv file with pairwise differences for each observation 
 ##             (cases or deaths for a given day)
-##    3.  csv file with processed data in a common format.
-##   Uses:  The csv pairwise differences can be input to bin/heatmapOfDiffs.R
-##          The csv file with all the data can be used for visual inspection
-##             or other further analysis.
+##    3.  heatmaps of various slices of pairwise difference matrix 
+##    4.  csv file with processed data in a common format. This file might be
+##        useful for visually inspecting the counts for counties with large
+##        discrepancies. 
 
 ## Usage:  bin/compareCSV.pl -outdir <dir>
 ##             -fetch or -nofetch:   hook to avoid multiple wgets (for testing)
