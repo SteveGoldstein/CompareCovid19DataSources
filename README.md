@@ -14,6 +14,6 @@ compares files, producing:
 
 4/27/2020 functionality:  nytimes_infection vs usafacts_infection are compared.
 
-Usage:  `bin/compareCSV.pl -outdir <dir>`  
->          `-excludeIdentical` (default) or `-noex`:  suppress printing identical entries  
->          `-fetch` or `-nofetch`:           hook to avoid multiple wgets (for testing)  
+>Usage:  bin/compareCSV.pl -outdir <dir>
+>>          -excludeIdentical (default) or -noex:  suppress printing identical entries  
+>>          -fetch or -nofetch:           hook to avoid multiple wgets (for testing)  
