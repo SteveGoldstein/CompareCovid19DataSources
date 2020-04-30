@@ -10,8 +10,8 @@ library(gplots)
 
 
 defaultArgs <- list (
-  plotFile = '2020-04-27/heatmaps.pdf',
-  csvFile = '2020-04-27/l1Distance.csv'
+  plotFile = '2020-04-29/heatmaps.pdf',
+  csvFile = '2020-04-29/l1Distance.csv'
 )
 
 args <- R.utils::commandArgs(trailingOnly = TRUE,
@@ -32,10 +32,11 @@ drawHeatMap <- function(x,rowRange = 1:nrow(x),
                         colRange = -grep("l1Distance",colnames(x)),
                         col=colRWB(),rowLabel=NULL,
                         rowv = FALSE,
+                        sepcolor = "lightgrey",
                         plotTitle = ""
                         ) {
-
-  heatmap.2(as.matrix(x[rowRange,colRange]),
+    minDeathCol <- min(grep("^D",colnames(x[,colRange])))
+    heatmap.2(as.matrix(x[rowRange,colRange]),
             dendrogram = "none",
             Rowv = rowv,
             Colv = FALSE,
@@ -44,9 +45,11 @@ drawHeatMap <- function(x,rowRange = 1:nrow(x),
             key.xlab = "diff between counts",
             trace="none",
             denscol = "black", density.info = "density",
+            colsep = minDeathCol,
+            sepcolor = sepcolor, sepwidth=c(0.01,0.01),
             col=col
             )
-  title(main= plotTitle)
+    title(main= plotTitle)
 } ##drawHeatmap
 
 ## get column indices for ranges of dates;
@@ -100,6 +103,12 @@ drawHeatMap(smallL1_dat,rowLabel = "",
             col=colRWB(7),
             plotTitle = "NYT-USAFacts: counties with l1 distance < 4"
 )
+
+wiscDat <- dat %>% 
+  rownames_to_column(var="fips") %>% 
+  filter(grepl('^55',fips)) %>% 
+  column_to_rownames(var="fips")
+
 
 dev.off()
 q()
