@@ -1,0 +1,17 @@
+Command line:
+	 bin/compareCSV.pl --out 2020-05-05/
+git commit:
+	85c0687413b8765eb17a9f14af3bb348d9938e15
+
+46102 only occurs in 1 file(s).
+46113 only occurs in 1 file(s).
+51690 only occurs in 1 file(s).
+File	#Columns	MissingColumns
+2020-05-05//nytimes_infections.csv	208	
+2020-05-05//usafacts_infections.csv	206	#Cases_01-21-2020,#Deaths_01-21-2020
+####################
+Removed fips 46102 from file 2020-05-05//nytimes_infections.csv
+Removed fips 46113,51690 from file 2020-05-05//usafacts_infections.csv
+985 fips identical
+Heatmap command:
+	Rscript --vanilla bin/heatmapOfDiffs.R -csvFile 2020-05-05//l1Distance.csv -plotFile 2020-05-05//heatmaps.pdf 1> 2020-05-05//heatmap.R.out 2> 2020-05-05//heatmap.R.err
